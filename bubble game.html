@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Memory Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .game-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .game-title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px 20px;
+            border-radius: 16px;
+            text-align: center;
+            flex: 1;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            font-weight: 400;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .bubble {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: transparent;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .bubble:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .bubble.flipped {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            color: #4a5568;
+            transform: scale(1.1);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .bubble.matched {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            transform: scale(0.95);
+            animation: matchPulse 0.6s ease-out;
+        }
+        
+        .bubble.wrong {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+            animation: wrongShake 0.5s ease-out;
+        }
+        
+        @keyframes matchPulse {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(0.95); }
+        }
+        
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .game-message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .game-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .floating-bubbles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .floating-bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 20px;
+            }
+            
+            .game-title {
+                font-size: 2rem;
+            }
+            
+            .game-board {
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            .bubble {
+                font-size: 1.5rem;
+            }
+            
+            .game-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-bubbles" id="floatingBubbles"></div>
+    
+    <div class="game-container">
+        <div class="game-header">
+            <h1 class="game-title">Bubble Memory</h1>
+        </div>
+        
+        <div class="game-stats">
+            <div class="stat-item">
+                <div class="stat-label">Moves</div>
+                <div class="stat-value" id="moves">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Matches</div>
+                <div class="stat-value" id="matches">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Time</div>
+                <div class="stat-value" id="timer">0:00</div>
+            </div>
+        </div>
+        
+        <div class="game-board" id="gameBoard"></div>
+        
+        <div class="game-controls">
+            <button class="btn btn-primary" onclick="startNewGame()">New Game</button>
+            <button class="btn btn-primary" onclick="resetGame()">Reset</button>
+        </div>
+        
+        <div class="game-message" id="gameMessage"></div>
+    </div>
+
+    <script>
+        class BubbleMemoryGame {
+            constructor() {
+                this.board = document.getElementById('gameBoard');
+                this.movesElement = document.getElementById('moves');
+                this.matchesElement = document.getElementById('matches');
+                this.timerElement = document.getElementById('timer');
+                this.messageElement = document.getElementById('gameMessage');
+                
+                this.cards = [];
+                this.flippedCards = [];
+                this.moves = 0;
+                this.matches = 0;
+                this.gameTime = 0;
+                this.timer = null;
+                this.isProcessing = false;
+                
+                this.symbols = ['🌸', '🌺', '🌻', '🌷', '🌹', '🌼', '🌿', '🍀'];
+                
+                this.init();
+                this.createFloatingBubbles();
+            }
+            
+            init() {
+                this.createBoard();
+                this.startTimer();
+            }
+            
+            createBoard() {
+                this.board.innerHTML = '';
+                this.cards = [];
+                this.flippedCards = [];
+                
+                // Create pairs of symbols
+                const gameSymbols = [...this.symbols, ...this.symbols];
+                
+                // Shuffle the symbols
+                for (let i = gameSymbols.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [gameSymbols[i], gameSymbols[j]] = [gameSymbols[j], gameSymbols[i]];
+                }
+                
+                // Create card elements
+                gameSymbols.forEach((symbol, index) => {
+                    const card = document.createElement('button');
+                    card.className = 'bubble';
+                    card.dataset.symbol = symbol;
+                    card.dataset.index = index;
+                    card.addEventListener('click', () => this.flipCard(card));
+                    
+                    this.board.appendChild(card);
+                    this.cards.push(card);
+                });
+            }
+            
+            flipCard(card) {
+                if (this.isProcessing || card.classList.contains('flipped') || card.classList.contains('matched')) {
+                    return;
+                }
+                
+                card.classList.add('flipped');
+                card.textContent = card.dataset.symbol;
+                this.flippedCards.push(card);
+                
+                if (this.flippedCards.length === 2) {
+                    this.moves++;
+                    this.movesElement.textContent = this.moves;
+                    this.checkMatch();
+                }
+            }
+            
+            checkMatch() {
+                this.isProcessing = true;
+                const [card1, card2] = this.flippedCards;
+                
+                setTimeout(() => {
+                    if (card1.dataset.symbol === card2.dataset.symbol) {
+                        // Match found
+                        card1.classList.add('matched');
+                        card2.classList.add('matched');
+                        card1.classList.remove('flipped');
+                        card2.classList.remove('flipped');
+                        
+                        this.matches++;
+                        this.matchesElement.textContent = this.matches;
+                        
+                        if (this.matches === this.symbols.length) {
+                            this.gameWon();
+                        }
+                    } else {
+                        // No match
+                        card1.classList.add('wrong');
+                        card2.classList.add('wrong');
+                        
+                        setTimeout(() => {
+                            card1.classList.remove('flipped', 'wrong');
+                            card2.classList.remove('flipped', 'wrong');
+                            card1.textContent = '';
+                            card2.textContent = '';
+                        }, 500);
+                    }
+                    
+                    this.flippedCards = [];
+                    this.isProcessing = false;
+                }, 600);
+            }
+            
+            gameWon() {
+                clearInterval(this.timer);
+                this.showMessage(`🎉 Congratulations! You won in ${this.moves} moves and ${this.formatTime(this.gameTime)}!`);
+            }
+            
+            startTimer() {
+                this.timer = setInterval(() => {
+                    this.gameTime++;
+                    this.timerElement.textContent = this.formatTime(this.gameTime);
+                }, 1000);
+            }
+            
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+            
+            showMessage(text) {
+                this.messageElement.textContent = text;
+                this.messageElement.classList.add('show');
+                
+                setTimeout(() => {
+                    this.messageElement.classList.remove('show');
+                }, 3000);
+            }
+            
+            reset() {
+                clearInterval(this.timer);
+                this.moves = 0;
+                this.matches = 0;
+                this.gameTime = 0;
+                this.isProcessing = false;
+                
+                this.movesElement.textContent = '0';
+                this.matchesElement.textContent = '0';
+                this.timerElement.textContent = '0:00';
+                
+                this.createBoard();
+                this.startTimer();
+            }
+            
+            createFloatingBubbles() {
+                const container = document.getElementById('floatingBubbles');
+                
+                setInterval(() => {
+                    const bubble = document.createElement('div');
+                    bubble.className = 'floating-bubble';
+                    
+                    const size = Math.random() * 60 + 20;
+                    bubble.style.width = size + 'px';
+                    bubble.style.height = size + 'px';
+                    bubble.style.left = Math.random() * 100 + '%';
+                    bubble.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                    bubble.style.animationDelay = Math.random() * 2 + 's';
+                    
+                    container.appendChild(bubble);
+                    
+                    setTimeout(() => {
+                        bubble.remove();
+                    }, 20000);
+                }, 3000);
+            }
+        }
+        
+        let game;
+        
+        function startNewGame() {
+            if (game) {
+                game.reset();
+            } else {
+                game = new BubbleMemoryGame();
+            }
+        }
+        
+        function resetGame() {
+            if (game) {
+                game.reset();
+            }
+        }
+        
+        // Initialize the game when page loads
+        window.addEventListener('load', () => {
+            game = new BubbleMemoryGame();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9674f7d2a3f871b6',t:'MTc1Mzg3OTY4My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
